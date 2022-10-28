@@ -1,21 +1,17 @@
-// https://www.shadertoy.com/view/lsf3WH
+// https://www.shadertoy.com/view/llGSzw
 
 const shader = `
-float hash(vec2 p) {
-  p  = 50.0*fract( p*0.3183099 + vec2(0.71,0.113));
-  return -1.0+2.0*fract( p.x*p.y*(p.x+p.y) );
+float hash1( uint n ) 
+{
+    // integer hash copied from Hugo Elias
+	n = (n << 13U) ^ n;
+    n = n * (n * n * 15731U + 789221U) + 1376312589U;
+    return float( n & uint(0x7fffffffU))/float(0x7fffffff);
 }
 
-float noise( in vec2 p ) {
-  vec2 i = floor( p );
-  vec2 f = fract( p );
-
-vec2 u = f*f*(3.0-2.0*f);
-
-  return mix( mix( hash( i + vec2(0.0,0.0) ), 
-                   hash( i + vec2(1.0,0.0) ), u.x),
-              mix( hash( i + vec2(0.0,1.0) ), 
-                   hash( i + vec2(1.0,1.0) ), u.x), u.y);
+float noise(in vec2 uv, in float time) {
+  uvec2 p = uvec2(uv);
+  return hash1( p.x + 1920U*p.y + (1920U*1080U)*uint(time) );
 }
 `;
 

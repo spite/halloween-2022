@@ -51,15 +51,18 @@ void main() {
   
   vec4 color = texture(inputTexture, vUv);
 
-  vec4 b =  b0 / 20.;
-  b +=  2.*b1 / 20.;
-  b +=  4.*b2 / 20.;
-  b +=  8.*b3 / 20.;
-  b +=  16.*b4 / 20.;
+  vec4 b =  b0 / 10.;
+  b +=  2.*b1 / 10.;
+  b +=  4.*b2 / 10.;
+  b +=  8.*b3 / 10.;
+  b +=  16.*b4 / 10.;
 
-  fragColor = screen(color, b, .5);
+  fragColor = color + b;
+  float f = .25;
+  b  = clamp(b-f, vec4(0.), vec4(1.))*(1./(1.-f));
+  fragColor = screen(color, b, 1.);
   fragColor *= vignette(vUv, vignetteBoost, vignetteReduction);
-  fragColor += .05 * noise(gl_FragCoord.xy + vec2(time, 0.));
+  fragColor += .05 * noise(gl_FragCoord.xy, time);
   fragColor.a = 1.;
 }
 `;
@@ -78,9 +81,8 @@ ${noise}
 
 void main() {
   vec2 uv = .8 * (vUv - .5) + .5;
-  // fragColor = fxaa(inputTexture, vUv);
   fragColor = chromaticAberration(inputTexture, uv, .1, (vUv-.5) );
-  fragColor += .05 * noise(gl_FragCoord.xy + vec2(time, 0.));
+  fragColor += .05 * noise(gl_FragCoord.xy, time/100.);
   fragColor.a = 1.;
 }`;
 
