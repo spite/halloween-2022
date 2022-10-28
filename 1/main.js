@@ -24,7 +24,8 @@ import {
   BoxBufferGeometry,
   MeshNormalMaterial,
   TextureLoader,
-} from "../third_party/three.module.js";
+} from "three";
+import { parabola } from "../modules/Maf.js";
 import { TAU } from "../modules/Maf.js";
 import { GLTFLoader } from "../third_party/GLTFLoader.js";
 import { SSAO } from "./SSAO.js";
@@ -35,46 +36,12 @@ const ssao = new SSAO();
 const post = new Post(renderer);
 
 const controls = getControls();
+controls.enableZoom = false;
+controls.enablePan = false;
 
-const rnd1 = (() => {
-  let seed = 1231312;
-  const a = 1103515245;
-  const c = 12345;
-  const m = 2 ** 31;
-  return () => {
-    seed = (a * seed + c) % m;
-    return seed / m;
-  };
-})();
-
-const rnd2 = (() => {
-  let seed = 3459173429;
-  return () => {
-    seed = 910230123 + seed;
-    return (seed % 10000) / 10000;
-  };
-})();
-
-function chooseRandomGenerator() {
-  if (Math.random() > 0.5) {
-    console.log("using rnd1");
-    return rnd1;
-  } else {
-    console.log("using rnd2");
-    return rnd2;
-  }
-}
-
-const rnd = chooseRandomGenerator();
 function randomInRange(a, b) {
-  return a + rnd() * (b - a);
+  return a + Math.random() * (b - a);
 }
-
-// const center = new Mesh(
-//   new BoxBufferGeometry(0.01, 0.01, 0.01),
-//   new MeshNormalMaterial()
-// );
-// scene.add(center);
 
 const side = 30;
 const poisson = new PoissonSphere3D(side, side, side, 2.5);
@@ -82,13 +49,15 @@ const points = poisson.calculate();
 
 const particles = [];
 for (const pt of points) {
-  const size = randomInRange(0.5, 2.5);
+  const toSize = randomInRange(0.5, 2.5);
   const rotx = Math.round(randomInRange(0, 10));
   const roty = Math.round(randomInRange(0, 10));
   particles.push({
     position: pt,
+    toPosition: pt.clone(),
     baseRot: randomInRange(0, TAU),
-    size,
+    size: 0,
+    toSize,
     rotx,
     toRotx: rotx,
     roty,
@@ -105,14 +74,15 @@ for (const pt of points) {
 function relax() {
   const dir = new Vector3();
   const force = new Vector3();
+  const tmp = new Vector3();
   for (let i = 0; i < particles.length; i++) {
     const a = particles[i];
-    const l = a.position.length();
+    const l = a.toPosition.length();
     force.set(0, 0, 0);
     for (let j = 0; j < particles.length; j++) {
       const b = particles[j];
       if (i !== j) {
-        dir.copy(a.position).sub(b.position);
+        dir.copy(a.toPosition).sub(b.toPosition);
         const l = dir.lengthSq();
         const d = a.size + b.size;
         if (l < d ** 2) {
@@ -121,13 +91,9 @@ function relax() {
       }
     }
     force.normalize().multiplyScalar(0.01);
-    a.position.add(force);
-    a.position.setLength(l);
+    tmp.copy(a.toPosition).add(force).setLength(l);
+    a.toPosition.lerp(tmp, 0.5);
   }
-}
-
-for (let i = 0; i < 100; i++) {
-  relax();
 }
 
 let mesh;
@@ -170,7 +136,17 @@ function update() {
   for (let i = 0; i < particles.length; i++) {
     const p = particles[i];
 
-    tmp.copy(p.position).multiplyScalar(0.01);
+    const l = p.position.length();
+    const dist = p.position.distanceTo(p.toPosition);
+    if (dist > 1) {
+      p.position.lerp(p.toPosition, 0.1 - 10 / dist);
+      p.position.setLength(l);
+    } else {
+      p.position.lerp(p.toPosition, 0.1);
+      p.position.setLength(l);
+    }
+
+    tmp.copy(p.toPosition).multiplyScalar(0.01);
     tmp.applyMatrix4(group.matrix);
     const pos = tmp.project(camera);
     tmp2.set(pos.x, -pos.y);
@@ -197,6 +173,8 @@ function update() {
     p.rotx += (Math.round(p.toRotx) - p.rotx) * 0.1;
     p.roty += (Math.round(p.toRoty) - p.roty) * 0.1;
 
+    p.size += (Math.round(p.toSize) - p.size) * 0.1;
+
     const s = p.size * 1;
     dir.copy(p).normalize();
     dir.set(0, 0, 1);
@@ -220,7 +198,9 @@ function update() {
 let frames = 0;
 
 function render() {
-  relax();
+  for (let i = 0; i < 10; i++) {
+    relax();
+  }
   if (running) {
     group.rotation.y += 0.001;
     group.rotation.x += 0.0001;
@@ -243,15 +223,12 @@ function render() {
 async function load() {
   const loader = new GLTFLoader();
   return await new Promise((resolve, reject) => {
-    // https://sketchfab.com/3d-models/realistic-pumpkin-a3b2b9efdc194d2e84970e099008bc5f
-    // Realistic Pumpkin by Styro
-    loader.load("realistic_pumpkin.glb", (e) => {
+    // https://sketchfab.com/3d-models/pumpkin-lowpoly-4ba264c53df944efbd977072a2637d91
+    // Pumpkin Lowpoly by Yumy Cubillos
+    loader.load("../assets/pumpkin_lowpoly.glb", (e) => {
       const mesh =
-        e.scene.children[0].children[0].children[0].children[0].children[0];
-      // mesh.geometry.scale(0.005, 0.005, 0.005);
-      // const mesh = e.scene.children[0].children[0].children[1]; //.children[0].children[0];
-      // mesh.geometry.scale(0.15, 0.15, 0.15);
-      // debugger;
+        e.scene.children[0].children[0].children[0].children[1].children[0];
+      mesh.geometry.scale(0.425, 0.425, 0.425);
       resolve(mesh);
     });
   });
@@ -263,7 +240,16 @@ function randomize() {
     const roty = Math.round(randomInRange(0, 10));
     p.toRotx = rotx;
     p.toRoty = roty;
+    p.toSize = randomInRange(0.5, 2.5);
+    p.toPosition
+      .set(randomInRange(-1, 1), randomInRange(-1, 1), randomInRange(-1, 1))
+      .normalize()
+      .multiplyScalar(15);
   }
+}
+
+function goFullscreen() {
+  renderer.domElement.requestFullscreen();
 }
 
 let running = true;
@@ -275,6 +261,9 @@ window.addEventListener("keydown", (e) => {
   if (e.code === "Space") {
     running = !running;
   }
+  if (e.code === "KeyF") {
+    goFullscreen();
+  }
 });
 
 document.querySelector("#randomizeBtn").addEventListener("click", (e) => {
@@ -285,11 +274,15 @@ document.querySelector("#pauseBtn").addEventListener("click", (e) => {
   running = !running;
 });
 
+document.querySelector("#fullscreenBtn").addEventListener("click", (e) => {
+  goFullscreen();
+});
+
 renderer.shadowMap.enabled = true;
 renderer.outputEncoding = sRGBEncoding;
 renderer.shadowMap.type = PCFSoftShadowMap;
 
-const hemiLight = new HemisphereLight(0xe7e9ed, 0x7d828e, 0.75);
+const hemiLight = new HemisphereLight(0xe7e9ed, 0x7d828e, 0.2);
 hemiLight.position.set(0, 50, 0);
 scene.add(hemiLight);
 
@@ -307,6 +300,7 @@ camera.position.set(
   0.34982308172165183,
   0.5576282549706502
 );
+camera.position.normalize().multiplyScalar(0.2);
 camera.lookAt(scene.position);
 
 const d = 0.3;
