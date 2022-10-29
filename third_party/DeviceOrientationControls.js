@@ -1,4 +1,10 @@
-import { Euler, EventDispatcher, MathUtils, Quaternion, Vector3 } from "three";
+import {
+  Euler,
+  EventDispatcher,
+  MathUtils,
+  Quaternion,
+  Vector3,
+} from "../third_party/three.module.js";
 
 const _zee = new Vector3(0, 0, 1);
 const _euler = new Euler();

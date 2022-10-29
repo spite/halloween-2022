@@ -19,7 +19,7 @@ import {
   HemisphereLight,
   DynamicDrawUsage,
   Vector2,
-} from "three";
+} from "../third_party/three.module.js";
 import { TAU } from "../modules/Maf.js";
 import { GLTFLoader } from "../third_party/GLTFLoader.js";
 import { SSAO } from "./SSAO.js";
