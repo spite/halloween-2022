@@ -1,5 +1,9 @@
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@500&family=Open+Sans:wght@300;600&display=swap");
 
+body {
+  overflow: hidden;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
