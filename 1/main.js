@@ -20,7 +20,6 @@ import {
   DynamicDrawUsage,
   Vector2,
 } from "three";
-import { clamp } from "../modules/Maf.js";
 import { TAU } from "../modules/Maf.js";
 import { GLTFLoader } from "../third_party/GLTFLoader.js";
 import { SSAO } from "./SSAO.js";
@@ -32,7 +31,7 @@ const ssao = new SSAO();
 const post = new Post(renderer);
 
 const controls = getControls();
-// controls.enableZoom = false;
+controls.enableZoom = false;
 controls.enablePan = false;
 
 camera.near = 0.01;
