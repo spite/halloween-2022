@@ -52,13 +52,20 @@ canvas {
   height: 100%;
 }
 
-#info {
+#ui {
+  display: flex;
   position: absolute;
-  left: 0.5em;
-  top: 0.5em;
-  pointer-events: none;
-  z-index: 10;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  flex-direction: column;
   padding: 1.5em;
+  gap: 1.5em;
+  z-index: 10;
+}
+
+#info {
+  pointer-events: none;
   color: white;
   text-shadow: 1px 1px black;
   border-radius: 1em;
@@ -136,13 +143,11 @@ button:hover,
 }
 
 footer {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  padding: 2em;
-  z-index: 10;
   color: white;
   text-shadow: 1px 1px black;
+  display: flex;
+  flex: 1;
+  align-items: end;
 }
 
 .contact {

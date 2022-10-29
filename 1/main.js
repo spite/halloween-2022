@@ -20,7 +20,7 @@ import {
   DynamicDrawUsage,
   Vector2,
 } from "three";
-import { parabola } from "../modules/Maf.js";
+import { clamp } from "../modules/Maf.js";
 import { TAU } from "../modules/Maf.js";
 import { GLTFLoader } from "../third_party/GLTFLoader.js";
 import { SSAO } from "./SSAO.js";
@@ -32,8 +32,11 @@ const ssao = new SSAO();
 const post = new Post(renderer);
 
 const controls = getControls();
-controls.enableZoom = false;
+// controls.enableZoom = false;
 controls.enablePan = false;
+
+camera.near = 0.01;
+camera.far = 20;
 
 let doControls;
 window.addEventListener(
@@ -45,7 +48,6 @@ window.addEventListener(
     if (!doControls) {
       console.log("Switching to Device Orientation Controls.");
       camera.position.set(0, 0, 0);
-      camera.fov = 90;
       resize();
       doControls = new DeviceOrientationControls(camera);
     }
@@ -317,7 +319,7 @@ camera.position.set(
   0.34982308172165183,
   0.5576282549706502
 );
-camera.position.normalize().multiplyScalar(0.2);
+camera.position.normalize().multiplyScalar(0.001);
 camera.lookAt(scene.position);
 
 const d = 0.3;
@@ -339,11 +341,28 @@ async function init() {
   render();
 }
 
+function calcFov(w, h, d) {
+  const diag = Math.sqrt(h * h + w * w);
+  const fov = 2 * Math.atan(diag / (2 * d)) * (180 / Math.PI);
+  return fov;
+}
+
 function myResize(w, h, dPR) {
+  const d = 1200;
+  camera.fov = calcFov(w, h, d);
+  camera.updateProjectionMatrix();
   ssao.setSize(w, h, dPR);
   post.setSize(w, h, dPR);
 }
 addResize(myResize);
+
+window.fov = (fov) => {
+  const size = new Vector2();
+  renderer.getSize(size);
+  console.log(size.x, size.y);
+  camera.fov = fov;
+  camera.updateProjectionMatrix();
+};
 
 resize();
 init();
