@@ -269,7 +269,11 @@ function randomize() {
 }
 
 function goFullscreen() {
-  renderer.domElement.requestFullscreen();
+  if (renderer.domElement.webkitRequestFullscreen) {
+    renderer.domElement.webkitRequestFullscreen();
+  } else {
+    renderer.domElement.requestFullscreen();
+  }
 }
 
 let running = true;
