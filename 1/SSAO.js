@@ -8,7 +8,7 @@ import {
   Scene,
   Mesh,
   Vector2,
-  PlaneBufferGeometry,
+  PlaneGeometry,
   OrthographicCamera,
 } from "../third_party/three.module.js";
 import { shader as orthoVs } from "../shaders/ortho.js";
@@ -197,7 +197,7 @@ class SSAO {
       0.00001,
       1000
     );
-    this.quad = new Mesh(new PlaneBufferGeometry(1, 1), this.shader);
+    this.quad = new Mesh(new PlaneGeometry(1, 1), this.shader);
     this.quad.scale.set(1, 1, 1);
     this.scene.add(this.quad);
 

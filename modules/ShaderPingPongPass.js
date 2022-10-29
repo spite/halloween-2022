@@ -2,7 +2,7 @@ import {
   OrthographicCamera,
   Scene,
   Mesh,
-  PlaneBufferGeometry,
+  PlaneGeometry,
 } from "../third_party/three.module.js";
 import { getFBO } from "./fbo.js";
 
@@ -21,7 +21,7 @@ class ShaderPingPongPass {
       0.00001,
       1000
     );
-    this.orthoQuad = new Mesh(new PlaneBufferGeometry(1, 1), this.shader);
+    this.orthoQuad = new Mesh(new PlaneGeometry(1, 1), this.shader);
     this.orthoQuad.scale.set(1, 1, 1);
     this.orthoScene.add(this.orthoQuad);
   }

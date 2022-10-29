@@ -17,19 +17,15 @@ import {
   DirectionalLight,
   sRGBEncoding,
   HemisphereLight,
-  MeshStandardMaterial,
   DynamicDrawUsage,
   Vector2,
-  Mesh,
-  BoxBufferGeometry,
-  MeshNormalMaterial,
-  TextureLoader,
 } from "three";
 import { parabola } from "../modules/Maf.js";
 import { TAU } from "../modules/Maf.js";
 import { GLTFLoader } from "../third_party/GLTFLoader.js";
 import { SSAO } from "./SSAO.js";
 import { Post } from "./post.js";
+import { DeviceOrientationControls } from "../third_party/DeviceOrientationControls.js";
 // import { capture } from "../modules/capture.js";
 
 const ssao = new SSAO();
@@ -38,6 +34,20 @@ const post = new Post(renderer);
 const controls = getControls();
 controls.enableZoom = false;
 controls.enablePan = false;
+
+let doControls;
+window.addEventListener(
+  "deviceorientation",
+  () => {
+    if (!doControls) {
+      camera.position.set(0, 0, 0);
+      camera.fov = 90;
+      resize();
+      doControls = new DeviceOrientationControls(camera);
+    }
+  },
+  true
+);
 
 function randomInRange(a, b) {
   return a + Math.random() * (b - a);
@@ -198,6 +208,9 @@ function update() {
 let frames = 0;
 
 function render() {
+  if (doControls) {
+    doControls.update();
+  }
   for (let i = 0; i < 10; i++) {
     relax();
   }
