@@ -38,8 +38,12 @@ controls.enablePan = false;
 let doControls;
 window.addEventListener(
   "deviceorientation",
-  () => {
+  (e) => {
+    if (e.alpha === null && e.beta === null && e.gamma === null) {
+      return;
+    }
     if (!doControls) {
+      console.log("Switching to Device Orientation Controls.");
       camera.position.set(0, 0, 0);
       camera.fov = 90;
       resize();
@@ -224,7 +228,7 @@ function render() {
 
   // capture(renderer.domElement);
 
-  // if (frames > 5 * 60 && window.capturer.capturing) {
+  // if (frames > 10 * 60 && window.capturer.capturing) {
   //   window.capturer.stop();
   //   window.capturer.save();
   // }
@@ -241,7 +245,7 @@ async function load() {
     loader.load("../assets/pumpkin_lowpoly.glb", (e) => {
       const mesh =
         e.scene.children[0].children[0].children[0].children[1].children[0];
-      mesh.geometry.scale(0.425, 0.425, 0.425);
+      mesh.geometry.scale(0.47, 0.47, 0.47);
       resolve(mesh);
     });
   });
