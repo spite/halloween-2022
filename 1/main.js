@@ -37,6 +37,7 @@ controls.enablePan = false;
 
 camera.near = 0.01;
 camera.far = 20;
+let distance = 1000;
 
 let doControls;
 window.addEventListener(
@@ -48,6 +49,7 @@ window.addEventListener(
     if (!doControls) {
       console.log("Switching to Device Orientation Controls.");
       camera.position.set(0, 0, 0);
+      distance = 500;
       resize();
       doControls = new DeviceOrientationControls(camera);
     }
@@ -314,12 +316,7 @@ dirLight.castShadow = true;
 dirLight.shadow.mapSize.width = 2048;
 dirLight.shadow.mapSize.height = 2048;
 
-camera.position.set(
-  -0.4546147168242088,
-  0.34982308172165183,
-  0.5576282549706502
-);
-camera.position.normalize().multiplyScalar(0.001);
+camera.position.set(0, 0, -0.1);
 camera.lookAt(scene.position);
 
 const d = 0.3;
@@ -348,8 +345,8 @@ function calcFov(w, h, d) {
 }
 
 function myResize(w, h, dPR) {
-  const d = 1200;
-  camera.fov = calcFov(w, h, d);
+  const s = Math.min(w, h);
+  camera.fov = calcFov(s, s, distance);
   camera.updateProjectionMatrix();
   ssao.setSize(w, h, dPR);
   post.setSize(w, h, dPR);
