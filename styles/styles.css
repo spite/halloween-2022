@@ -58,6 +58,7 @@ canvas {
 
 #ui {
   display: flex;
+  pointer-events: none;
   position: absolute;
   left: 0;
   top: 0;
@@ -69,7 +70,6 @@ canvas {
 }
 
 #info {
-  pointer-events: none;
   color: white;
   text-shadow: 1px 1px black;
   border-radius: 1em;
