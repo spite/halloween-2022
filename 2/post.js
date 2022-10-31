@@ -1,19 +1,11 @@
 import {
   RawShaderMaterial,
-  HalfFloatType,
-  NearestFilter,
   RGBAFormat,
   UnsignedByteType,
   LinearFilter,
   ClampToEdgeWrapping,
-  BackSide,
-  FrontSide,
   Vector2,
   GLSL3,
-  Vector3,
-  DataTexture3D,
-  RedFormat,
-  FloatType,
 } from "../third_party/three.module.js";
 import { getFBO } from "../modules/fbo.js";
 import { shader as orthoVertexShader } from "../shaders/ortho.js";
@@ -21,10 +13,7 @@ import { ShaderPass } from "../modules/ShaderPass.js";
 import { shader as vignette } from "../shaders/vignette.js";
 import { shader as noise } from "../shaders/noise.js";
 import { shader as screen } from "../shaders/screen.js";
-// import { shader as fxaa } from "../shaders/fxaa.js";
-// import { shader as softLight } from "../shaders/soft-light.js";
-// import { shader as colorDodge } from "../shaders/color-dodge.js";
-// import { shader as rgbShift } from "../shaders/rgb-shift.js";
+
 import { BloomPass } from "../modules/bloomPass.js";
 
 const finalFragmentShader = `
@@ -71,8 +60,8 @@ void main() {
 
   fragColor = color;
   fragColor *= vignette(vUv, vignetteBoost, vignetteReduction);
-  fragColor = clamp(screen(fragColor, b, 1.), vec4(0.), vec4(1.));
-  fragColor += .1 * noise(gl_FragCoord.xy + vec2(time, 0.));
+  fragColor = screen(fragColor, b, 1.);//clamp(screen(fragColor, b, 1.), vec4(0.), vec4(1.));
+  fragColor += .1 * noise(gl_FragCoord.xy, time);
   fragColor.a = 1.;
 }
 `;
@@ -87,7 +76,7 @@ out vec4 fragColor;
 
 void main() {
   vec4 c = texture(inputTexture, vUv);
-  fragColor = clamp(c-.8, 0., 1.) * 10.;
+  fragColor = clamp(c-.8, 0., 1.) * 1. / (1.-.8);
 }`;
 
 const colorFragmentShader = `precision highp float;
@@ -146,7 +135,7 @@ class Post {
       uniforms: {
         resolution: { value: new Vector2(1, 1) },
         vignetteBoost: { value: params.vignetteBoost || 1.1 },
-        vignetteReduction: { value: params.vignetteReduction || 1.1 },
+        vignetteReduction: { value: params.vignetteReduction || 2.1 },
         inputTexture: { value: this.colorPass.texture },
         blur0Texture: { value: null },
         blur1Texture: { value: null },

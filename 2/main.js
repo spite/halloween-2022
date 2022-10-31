@@ -4,26 +4,18 @@ import {
   addResize,
   resize,
   camera,
-  getControls,
 } from "../modules/renderer.js";
 import {
   DynamicDrawUsage,
-  PointLight,
-  Raycaster,
-  PlaneBufferGeometry,
   Mesh,
-  Vector2,
   IcosahedronBufferGeometry,
   InstancedMesh,
   HemisphereLight,
   Object3D,
-  sRGBEncoding,
   Vector3,
-  MeshStandardMaterial,
-  PCFSoftShadowMap,
   MeshBasicMaterial,
   Quaternion,
-} from "three";
+} from "../third_party/three.module.js";
 import { GLTFLoader } from "../third_party/GLTFLoader.js";
 import { Particle } from "./Particle.js";
 import { Physics } from "./Physics.js";
@@ -32,59 +24,30 @@ import { Collision } from "./Collision.js";
 import { clamp, randomInRange, map } from "../modules/Maf.js";
 import { Verlet } from "./Verlet.js";
 import { Post } from "./post.js";
-import {
-  warm,
-  natural,
-  natural2,
-  circus,
-  circus2,
-  warm2,
-  warm3,
-} from "../modules/palettes.js";
+import { warm3 } from "../modules/palettes.js";
 import { GradientLinear } from "../modules/gradient-linear.js";
 import { initHdrEnv } from "../modules/hdri.js";
 import { Matrix4 } from "../third_party/three.module.js";
-// import { capture } from "../modules/capture.js";
+import { curl, generateNoiseFunction } from "../modules/curl.js";
+import { OrbitControls } from "../third_party/OrbitControls.js";
 
-const controls = getControls();
+import { capture } from "../modules/capture.js";
 
-camera.position.set(1, 1, 1).normalize().multiplyScalar(5);
+const camera2 = camera.clone();
+const controls = new OrbitControls(camera2, renderer.domElement);
+camera2.position.set(1, 1, 1).normalize().multiplyScalar(5);
 
-let gradient = new GradientLinear(warm);
+const gradient = new GradientLinear(warm3);
 
 const post = new Post(renderer);
-renderer.setClearColor(0x202020, 1);
+renderer.setClearColor(0x101010, 1);
 const physics = new Physics(new Verlet());
+physics.viscosity = 0.005;
 
-const raycaster = new Raycaster();
-const mouse = new Vector2(0, 0);
-const plane = new Mesh(new PlaneBufferGeometry(1000, 1000), new Mesh());
-plane.visible = false;
-scene.add(plane);
 const point = new Vector3(0, 0, 0);
 const nextPoint = new Vector3(0, 0, 0);
 
-renderer.shadowMap.type = PCFSoftShadowMap;
-renderer.shadowMap.enabled = true;
-
-function hitPoint() {
-  raycaster.setFromCamera(mouse, camera);
-  const intersects = raycaster.intersectObject(plane);
-
-  if (intersects.length) {
-    nextPoint.copy(intersects[0].point);
-  }
-}
-
-function onMouseMove(event) {
-  mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-  mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-}
-
-window.addEventListener("pointermove", onMouseMove, false);
-window.addEventListener("pointerdown", onMouseMove, false);
-
-const attraction = new Attraction(point, 20, 0.02);
+const attraction = new Attraction(point, 200, 0.02);
 const repulsion = new Attraction(point, 1.1, -0.4);
 const collide = new Collision();
 
@@ -98,9 +61,12 @@ async function load() {
   const pumpkin = new Promise((resolve, reject) => {
     // https://sketchfab.com/3d-models/pumpkin-lowpoly-4ba264c53df944efbd977072a2637d91
     // Pumpkin Lowpoly by Yumy Cubillos
-    loader.load("pumpkin_lowpoly.glb", (e) => {
+    loader.load("../assets/pumpkin_lowpoly.glb", (e) => {
       const pumpkin =
         e.scene.children[0].children[0].children[0].children[1].children[0];
+      pumpkin.geometry.rotateZ(Math.PI / 2);
+      pumpkin.geometry.rotateY(Math.PI / 2);
+      pumpkin.geometry.rotateX(-Math.PI / 2);
       mesh = new InstancedMesh(
         pumpkin.geometry,
         pumpkin.material,
@@ -110,31 +76,17 @@ async function load() {
       mesh.castShadow = mesh.receiveShadow = true;
       mesh.count = count / 2;
       scene.add(mesh);
-
       resolve();
     });
   });
-  // const ghost = new Promise((resolve, reject) => {
-  //   // https://sketchfab.com/3d-models/skull-5efad9cc8355428d8a048fd79a18f5d4
-  //   // Skull by Thomas Andris
-  //   loader.load("ghost_game_ready.glb", (e) => {
-  //     const skull =
-  //       e.scene.children[0].children[0].children[0].children[0].children[0];
-  //     mesh2 = new InstancedMesh(skull.geometry, skull.material, maxCount / 2);
-  //     mesh2.geometry.scale(0.03, 0.03, 0.03);
-  //     mesh2.instanceMatrix.setUsage(DynamicDrawUsage);
-  //     mesh2.castShadow = mesh2.receiveShadow = true;
-  //     mesh2.count = count / 2;
-  //     scene.add(mesh2);
-
-  //     resolve();
-  //   });
-  // });
   const skull = new Promise((resolve, reject) => {
     // https://sketchfab.com/3d-models/skull-5efad9cc8355428d8a048fd79a18f5d4
     // Skull by Thomas Andris
-    loader.load("skull.glb", (e) => {
+    loader.load("../assets/skull.glb", (e) => {
       const skull = e.scene.children[0].children[0].children[0];
+      skull.geometry.rotateZ(Math.PI / 2);
+      skull.geometry.rotateY(Math.PI / 2);
+      skull.geometry.rotateZ(Math.PI / 2);
       mesh2 = new InstancedMesh(skull.geometry, skull.material, maxCount / 2);
       mesh2.geometry.scale(1.5, 1.5, 1.5);
       mesh2.instanceMatrix.setUsage(DynamicDrawUsage);
@@ -147,47 +99,41 @@ async function load() {
   return Promise.all([pumpkin, skull]);
 }
 
-let min = 0.01;
-let max = 0.03;
-
-function boxMullerTransform() {
-  const u1 = Math.random();
-  const u2 = Math.random();
-
-  const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
-  const z1 = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
-
-  return { z0, z1 };
+function randomGaussian(v = 3) {
+  let r = 0;
+  for (let i = v; i > 0; i--) {
+    r += Math.random();
+  }
+  return r / v;
 }
 
-function getNormallyDistributedRandomNumber(mean, stddev) {
-  const { z0, _ } = boxMullerTransform();
-
-  return z0 * stddev + mean;
-}
+const min = 0.003;
+const max = 0.009;
 
 function addParticles() {
   for (let i = physics.particles.length; i < count; i++) {
-    const particle = new Particle(
-      0.1 * getNormallyDistributedRandomNumber(0.05, 0.01)
-    );
+    const mass = map(0, 1, min, max, randomGaussian());
+    const particle = new Particle(mass);
     particle.radius = particle.mass * 20;
     particle.roll = randomInRange(0, 2 * Math.PI);
-    particle.rollSpeed = particle.mass * 10;
+    particle.rollSpeed =
+      (0.0001 / particle.mass) * Math.sign(randomInRange(-1, 1));
     particle.rotation = new Quaternion(
       Math.random() * 2 - 1,
       Math.random() * 2 - 1,
       Math.random() * 2 - 1,
       Math.random() * 2 - 1
     ).normalize();
-
     particle.moveTo(
       new Vector3(
         randomInRange(-1, 1),
         randomInRange(-1, 1),
         randomInRange(-1, 1)
       )
+        .normalize()
+        .multiplyScalar(randomInRange(1, 3))
     );
+    particle.color = gradient.getAt(map(min, max, 0, 1, particle.mass));
     particle.behaviours.push(attraction);
     particle.behaviours.push(repulsion);
     particle.behaviours.push(collide);
@@ -196,43 +142,41 @@ function addParticles() {
 
     physics.particles.push(particle);
 
-    // mesh.setColorAt(i, gradient.getAt(map(min, max, 0, 1, particle.mass)));
+    // const particle = physics.particles[i];
   }
-  // mesh.instanceColor.needsUpdate = true;
 
   while (physics.particles.length > count) {
     physics.particles.pop();
     collide.pool.pop();
   }
+  updateColors();
 }
 
-function randomizeColors() {
-  const palettes = [warm, natural, natural2, circus, circus2, warm2, warm3];
-  const palette = palettes[Math.floor(Math.random() * palettes.length)];
-  gradient = new GradientLinear(palette);
-  min = randomInRange(0.001, 0.005);
-  max = randomInRange(0.01, 0.03);
+function updateColors() {
   for (let i = 0; i < physics.particles.length; i++) {
     const particle = physics.particles[i];
-    particle.mass = randomInRange(min, max);
-    // mesh.setColorAt(i, gradient.getAt(map(min, max, 0, 1, particle.mass)));
+    mesh.setColorAt(i, particle.color);
+    mesh2.setColorAt(i, particle.color);
   }
-  // mesh.instanceColor.needsUpdate = true;
+  mesh.instanceColor.needsUpdate = true;
+  mesh2.instanceColor.needsUpdate = true;
 }
 
 function randomize() {
-  material.roughness = randomInRange(0.2, 0.8);
-  material.metalness = randomInRange(0, 0.2);
-  randomizeColors();
+  for (let i = 0; i < physics.particles.length; i++) {
+    const particle = physics.particles[i];
+    const mass = map(0, 1, min, max, randomGaussian());
+    particle.mass = mass;
+    particle.radius = particle.mass * 20;
+    particle.rollSpeed = particle.mass;
+    particle.color = gradient.getAt(map(min, max, 0, 1, particle.mass));
+  }
+  updateColors();
 }
 
 const dummy = new Object3D();
 
-const light = new PointLight(0xffffff, 1, 100);
-scene.add(light);
-light.castShadow = true;
-
-const hemiLight = new HemisphereLight(0xffffbb, 0x080820, 0.5);
+const hemiLight = new HemisphereLight(0xffffbb, 0x080820, 0.2);
 scene.add(hemiLight);
 
 const center = new Mesh(
@@ -253,6 +197,23 @@ function setCount(c) {
   addParticles();
 }
 
+function goFullscreen() {
+  if (renderer.domElement.webkitRequestFullscreen) {
+    renderer.domElement.webkitRequestFullscreen();
+  } else {
+    renderer.domElement.requestFullscreen();
+  }
+}
+
+let cam = camera;
+function toggleCamera() {
+  if (cam === camera) {
+    cam = camera2;
+  } else {
+    cam = camera;
+  }
+}
+
 window.addEventListener("keydown", (e) => {
   if (e.code === "Space") {
     running = !running;
@@ -265,6 +226,12 @@ window.addEventListener("keydown", (e) => {
   }
   if (e.key === "+") {
     setCount(count + 100);
+  }
+  if (e.code === "KeyC") {
+    toggleCamera();
+  }
+  if (e.code === "KeyF") {
+    goFullscreen();
   }
 });
 
@@ -284,34 +251,64 @@ document.querySelector("#randomizeBtn").addEventListener("click", (e) => {
   randomize();
 });
 
+document.querySelector("#fullscreenBtn").addEventListener("click", (e) => {
+  goFullscreen();
+});
+
+document.querySelector("#cameraBtn").addEventListener("click", (e) => {
+  toggleCamera();
+});
+
 let prevTime = performance.now();
+const tmp = new Vector3();
+let time = 0;
+const particleCenter = new Vector3(0, 0, 0);
+const cameraRot = new Quaternion();
+const cameraFrom = new Vector3(0, 0, 1);
+const cameraTo = new Vector3(0, 0, 1);
+const fn = generateNoiseFunction();
+
+let frames = 0;
 
 function render() {
-  plane.lookAt(camera.position);
-
-  hitPoint();
-  point.lerp(nextPoint, 0.1);
-
-  light.position.copy(point);
-  center.position.copy(point);
-  center.lookAt(prevPoint);
-  t.copy(point).sub(prevPoint);
-  center.scale.x = clamp(1 - t.length() * 2, 0.1, 10);
-  center.scale.y = clamp(1 - t.length() * 2, 0.1, 10);
-  center.scale.z = 1 + t.length() * 10;
-  prevPoint.copy(point);
-
-  const time = performance.now();
-  const dt = time - prevTime;
-  prevTime = time;
+  const now = performance.now();
+  const dt = now - prevTime;
+  prevTime = now;
 
   if (running) {
+    time += dt;
     physics.step(dt);
 
+    const t = time / 1000;
+    const r = 0.5 + 0.5 * Math.sin(t);
+    const p = new Vector3(t, 0, 0).multiplyScalar(0.8);
+    const n = curl(p, fn);
+    n.normalize().multiplyScalar(0.1 + 0.9 * r);
+    const f = n.clone().copy(n);
+
+    nextPoint.copy(f);
+
+    point.lerp(nextPoint, 0.1);
+    point.setLength(5);
+
+    // light.position.copy(point);
+    center.position.copy(point);
+    center.lookAt(prevPoint);
+    tmp.copy(point).sub(prevPoint);
+    center.scale.x = clamp(1 - tmp.length() * 2, 0.1, 10);
+    center.scale.y = clamp(1 - tmp.length() * 2, 0.1, 10);
+    center.scale.z = 1 + tmp.length() * 10;
+    prevPoint.copy(point);
+
+    for (const p of physics.particles) {
+      particleCenter.add(p.position);
+    }
+    particleCenter.divideScalar(physics.particles.length);
+
     const q = new Quaternion();
-    const tmp = new Vector3();
     const mat = new Matrix4();
     const rot = new Matrix4();
+    const zero = new Vector3(0, 0, 0);
     const up = new Vector3(0, 1, 0);
 
     for (let i = 0; i < physics.particles.length; i++) {
@@ -323,15 +320,16 @@ function render() {
         .set(
           clamp(p.mass - v, p.mass / f, p.mass),
           clamp(p.mass - v, p.mass / f, p.mass),
-          clamp(p.mass - v, p.mass / f, p.mass)
+          clamp(p.velocity.length() / 100, 0, 0.1) +
+            clamp(p.mass - v, p.mass / f, p.mass)
         )
         .multiplyScalar(10);
-      t.copy(p.position).add(p.velocity);
-      rot.makeRotationX(p.roll + (p.rollSpeed * time) / 1000);
-      mat.lookAt(p.position, t, up);
-      rot.multiply(mat);
-      q.setFromRotationMatrix(rot);
-      p.rotation.rotateTowards(q, 0.05);
+      mat.lookAt(zero, p.velocity, up);
+      p.roll += p.rollSpeed;
+      rot.makeRotationZ(p.roll);
+      mat.multiply(rot);
+      q.setFromRotationMatrix(mat);
+      p.rotation.slerp(q, 10 * p.mass);
       dummy.quaternion.copy(p.rotation);
       dummy.updateMatrix();
       if (i < count / 2) {
@@ -342,15 +340,32 @@ function render() {
     }
     mesh.instanceMatrix.needsUpdate = true;
     mesh2.instanceMatrix.needsUpdate = true;
+
+    camera.position.set(0, 0, 0);
+    cameraTo.copy(particleCenter).negate().normalize();
+    cameraRot.setFromUnitVectors(cameraFrom, cameraTo);
+    camera.quaternion.slerp(cameraRot, 0.05);
+
+    controls.target0.copy(particleCenter);
   }
+
   // renderer.render(scene, camera);
-  post.render(scene, camera);
-  // capture(renderer.domElement);
+  post.render(scene, cam);
+
+  capture(renderer.domElement);
+
+  if (frames > 10 * 60 && window.capturer.capturing) {
+    window.capturer.stop();
+    window.capturer.save();
+  }
+  frames++;
 
   renderer.setAnimationLoop(render);
 }
 
 function myResize(w, h, dpr) {
+  camera2.aspect = w / h;
+  camera2.updateProjectionMatrix();
   post.setSize(w * dpr, h * dpr);
 }
 addResize(myResize);
@@ -359,7 +374,6 @@ async function init() {
   await load();
   addParticles();
   const envMap = await initHdrEnv("studio_small_03_1k.hdr", renderer);
-  // mesh.material.wireframe = true;
   mesh.material.envMap = envMap;
   mesh.material.envMapIntensity = 0.2;
   mesh2.material.envMap = envMap;
@@ -369,3 +383,8 @@ async function init() {
 }
 
 init();
+
+window.start = () => {
+  frames = 0;
+  window.capturer.start();
+};
