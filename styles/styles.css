@@ -154,6 +154,10 @@ footer {
   align-items: end;
 }
 
+footer a {
+  pointer-events: auto;
+}
+
 .contact {
   padding: 1em;
   font-size: 2em;
