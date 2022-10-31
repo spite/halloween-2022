@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Halloween 2022</title>
+
+    <!-- Twitter Card data -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@thespite" />
+    <meta name="twitter:title" content="Halloween 2022 - Spooky cloud" />
+    <meta name="twitter:description" content="A cloud of spooky things" />
+    <meta name="twitter:creator" content="@thespite" />
+    <meta
+      name="twitter:image:src"
+      content="https://spite.github.io/halloween-2022/screenshots/halloween-2022-2.jpg"
+    />
+
+    <!-- Open Graph data -->
+    <meta property="og:type" content="demo" />
+    <meta
+      property="og:image"
+      content="https://spite.github.io/halloween-2022/screenshots/halloween-2022-2.jpg"
+    />
+    <meta property="og:description" content="A cloud of spooky things" />
+    <meta property="og:site_name" content="Clicktorelease" />
+
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1" />
+    <link href="../styles/styles.css" rel="stylesheet" />
+    <style>
+      #landing {
+        position: absolute;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        display: flex;
+        flex-direction: row;
+      }
+      .one,
+      .two {
+        flex: 1;
+        background-size: cover;
+        background-position: center;
+        color: white;
+        font-size: min(5vw, 5vh);
+        padding: 3em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        text-shadow: 0 0 2em red, 0 0 1em #ffb7b7;
+        filter: saturate(0.1);
+        transition: filter 250ms ease-out;
+      }
+      .one:hover,
+      .two:hover {
+        text-decoration: none;
+        filter: saturate(1);
+      }
+      .one {
+        background-image: url(/screenshots/halloween-2022-1.jpg);
+      }
+      .two {
+        background-image: url(/screenshots/halloween-2022-2.jpg);
+      }
+      @media (min-aspect-ratio: 1/1) {
+        #landing {
+          flex-direction: row;
+        }
+      }
+      @media (max-aspect-ratio: 1/1) {
+        #landing {
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="landing">
+      <a href="/1" class="one">Pumpkin<br />Sphere</a>
+      <a href="/2" class="two">Spooky<br />Cloud</a>
+    </div>
+    <tweet-button></tweet-button>
+  </body>
+  <script src="../modules/tweet-button.js" type="module"></script>
+</html>
