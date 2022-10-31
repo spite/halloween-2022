@@ -269,6 +269,11 @@ const cameraTo = new Vector3(0, 0, 1);
 const fn = generateNoiseFunction();
 
 let frames = 0;
+const q = new Quaternion();
+const mat = new Matrix4();
+const rot = new Matrix4();
+const zero = new Vector3(0, 0, 0);
+const up = new Vector3(0, 1, 0);
 
 function render() {
   const now = performance.now();
@@ -291,7 +296,6 @@ function render() {
     point.lerp(nextPoint, 0.1);
     point.setLength(5);
 
-    // light.position.copy(point);
     center.position.copy(point);
     center.lookAt(prevPoint);
     tmp.copy(point).sub(prevPoint);
@@ -304,12 +308,6 @@ function render() {
       particleCenter.add(p.position);
     }
     particleCenter.divideScalar(physics.particles.length);
-
-    const q = new Quaternion();
-    const mat = new Matrix4();
-    const rot = new Matrix4();
-    const zero = new Vector3(0, 0, 0);
-    const up = new Vector3(0, 1, 0);
 
     for (let i = 0; i < physics.particles.length; i++) {
       const p = physics.particles[i];
@@ -344,7 +342,7 @@ function render() {
     camera.position.set(0, 0, 0);
     cameraTo.copy(particleCenter).negate().normalize();
     cameraRot.setFromUnitVectors(cameraFrom, cameraTo);
-    camera.quaternion.slerp(cameraRot, 0.05);
+    camera.quaternion.slerp(cameraRot, 0.025);
 
     controls.target0.copy(particleCenter);
   }
