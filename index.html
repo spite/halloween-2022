@@ -50,19 +50,28 @@
         justify-content: center;
         text-align: center;
         text-shadow: 0 0 2em red, 0 0 1em #ffb7b7;
-        filter: saturate(0.1);
-        transition: filter 250ms ease-out;
+        text-decoration: none;
       }
       .one:hover,
       .two:hover {
         text-decoration: none;
-        filter: saturate(1);
       }
       .one {
         background-image: url(./screenshots/halloween-2022-1.jpg);
       }
       .two {
         background-image: url(./screenshots/halloween-2022-2.jpg);
+      }
+      @media (hover: hover) {
+        .one,
+        .two {
+          filter: saturate(0.1);
+          transition: filter 250ms ease-out;
+        }
+        .one:hover,
+        .two:hover {
+          filter: saturate(1);
+        }
       }
       @media (min-aspect-ratio: 1/1) {
         #landing {
