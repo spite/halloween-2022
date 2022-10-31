@@ -31,7 +31,7 @@ import { Matrix4 } from "../third_party/three.module.js";
 import { curl, generateNoiseFunction } from "../modules/curl.js";
 import { OrbitControls } from "../third_party/OrbitControls.js";
 
-import { capture } from "../modules/capture.js";
+// import { capture } from "../modules/capture.js";
 
 const camera2 = camera.clone();
 const controls = new OrbitControls(camera2, renderer.domElement);
@@ -352,13 +352,13 @@ function render() {
   // renderer.render(scene, camera);
   post.render(scene, cam);
 
-  capture(renderer.domElement);
+  // capture(renderer.domElement);
 
-  if (frames > 10 * 60 && window.capturer.capturing) {
-    window.capturer.stop();
-    window.capturer.save();
-  }
-  frames++;
+  // if (frames > 30 * 60 && window.capturer.capturing) {
+  //   window.capturer.stop();
+  //   window.capturer.save();
+  // }
+  // frames++;
 
   renderer.setAnimationLoop(render);
 }
@@ -384,7 +384,7 @@ async function init() {
 
 init();
 
-window.start = () => {
-  frames = 0;
-  window.capturer.start();
-};
+// window.start = () => {
+//   frames = 0;
+//   window.capturer.start();
+// };
