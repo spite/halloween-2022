@@ -342,10 +342,7 @@ function render() {
     camera.position.set(0, 0, 0);
     mat.lookAt(zero, particleCenter, up);
     cameraRot.setFromRotationMatrix(mat);
-    // cameraTo.copy(particleCenter).negate().normalize();
-    // /cameraRot.setFromUnitVectors(cameraFrom, cameraTo);
     camera.quaternion.rotateTowards(cameraRot, 0.025);
-    // camera.lookAt(particleCenter);
 
     controls.target0.copy(particleCenter);
   }
@@ -355,7 +352,7 @@ function render() {
 
   // capture(renderer.domElement);
 
-  // if (frames > 30 * 60 && window.capturer.capturing) {
+  // if (frames > 50 * 60 && window.capturer.capturing) {
   //   window.capturer.stop();
   //   window.capturer.save();
   // }
