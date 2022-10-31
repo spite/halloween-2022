@@ -48,7 +48,7 @@ const point = new Vector3(0, 0, 0);
 const nextPoint = new Vector3(0, 0, 0);
 
 const attraction = new Attraction(point, 200, 0.02);
-const repulsion = new Attraction(point, 1.1, -0.4);
+const repulsion = new Attraction(point, 1.6, -0.4);
 const collide = new Collision();
 
 let count = 800;
@@ -141,8 +141,6 @@ function addParticles() {
     collide.pool.push(particle);
 
     physics.particles.push(particle);
-
-    // const particle = physics.particles[i];
   }
 
   while (physics.particles.length > count) {
@@ -163,6 +161,8 @@ function updateColors() {
 }
 
 function randomize() {
+  repulsion.radius = randomInRange(1.1, 2.5);
+  repulsion.strength = randomInRange(-0.2, -0.6);
   for (let i = 0; i < physics.particles.length; i++) {
     const particle = physics.particles[i];
     const mass = map(0, 1, min, max, randomGaussian());
@@ -327,7 +327,7 @@ function render() {
       rot.makeRotationZ(p.roll);
       mat.multiply(rot);
       q.setFromRotationMatrix(mat);
-      p.rotation.slerp(q, 10 * p.mass);
+      p.rotation.slerp(q, 5 * p.mass);
       dummy.quaternion.copy(p.rotation);
       dummy.updateMatrix();
       if (i < count / 2) {
@@ -340,9 +340,12 @@ function render() {
     mesh2.instanceMatrix.needsUpdate = true;
 
     camera.position.set(0, 0, 0);
-    cameraTo.copy(particleCenter).negate().normalize();
-    cameraRot.setFromUnitVectors(cameraFrom, cameraTo);
-    camera.quaternion.slerp(cameraRot, 0.025);
+    mat.lookAt(zero, particleCenter, up);
+    cameraRot.setFromRotationMatrix(mat);
+    // cameraTo.copy(particleCenter).negate().normalize();
+    // /cameraRot.setFromUnitVectors(cameraFrom, cameraTo);
+    camera.quaternion.rotateTowards(cameraRot, 0.025);
+    // camera.lookAt(particleCenter);
 
     controls.target0.copy(particleCenter);
   }
