@@ -282,7 +282,7 @@ function render() {
 
   if (running) {
     time += dt;
-    physics.step(dt);
+    physics.step(dt / 2);
 
     const t = time / 1000;
     const r = 0.5 + 0.5 * Math.sin(t);

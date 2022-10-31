@@ -10,7 +10,7 @@ class Physics {
     this._step = 0;
     this.clock = null;
     this.buffer = 0;
-    this.maxSteps = 4;
+    this.maxSteps = 10;
     this.particles = [];
     this.springs = [];
   }
